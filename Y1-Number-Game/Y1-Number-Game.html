@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Y1 Interactive Game — Counting & Number Sense</title>
+  <style>
+    :root{--bg:#0f172a;--panel:#0b1220;--card:#111827;--muted:#9aa4b2;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;background:var(--bg);color:#e5e7eb}
+    header{position:sticky;top:0;background:var(--panel);border-bottom:1px solid #1f2937;padding:16px;z-index:10}
+    h1{margin:0;font-size:20px}
+    .sub{color:var(--muted);font-size:13px}
+    .wrap{max-width:1100px;margin:16px auto;padding:0 16px;display:grid;gap:16px}
+    @media(min-width:980px){.wrap{grid-template-columns:1.2fr .8fr}}
+    .card{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:16px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+    .tab{background:var(--panel);border:1px solid #243042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+    .tab.active{border-color:var(--ok);box-shadow:0 0 0 2px #14532d inset}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    button{background:var(--panel);border:1px solid #243042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+    button.primary{background:linear-gradient(135deg,#16a34a,#22c55e);border:none;color:#06210d}
+    button.warn{background:#1f1300;border:1px solid #6b4e00;color:#ffd166}
+    input,select{background:var(--panel);border:1px solid #243042;border-radius:10px;color:#e5e7eb;padding:10px}
+    .result{margin-top:10px;padding:10px;border-radius:10px;background:var(--panel);border:1px solid #1f2937}
+    .ok{color:var(--ok)} .err{color:var(--err)} .muted{color:var(--muted)}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .chip{padding:10px 12px;border:1px solid #2a3646;border-radius:999px;background:var(--panel);cursor:grab}
+    .slot{padding:10px 12px;border:1px solid #2a3646;border-radius:999px;background:var(--panel);min-height:42px}
+    .dropzone{min-height:110px;border:2px dashed #334155;border-radius:14px;padding:10px}
+    .grid{display:grid;gap:12px}
+    .board{display:grid;grid-template-columns:repeat(11,1fr);gap:6px}
+    .box{border:1px solid #243042;background:#0b1220;border-radius:10px;padding:8px;text-align:center}
+    .dots{display:grid;gap:4px;grid-template-columns:repeat(10,1fr)}
+    .dot{width:14px;height:14px;border-radius:50%;background:#22c55e}
+    .bingo{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .tile{border:1px solid #253042;background:#0b1220;border-radius:10px;padding:16px;text-align:center;cursor:pointer}
+    .tile.mark{outline:2px solid var(--ok)}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Y1 Interactive Game — Counting & Number Sense (Week 1)</h1>
+    <div class="sub">0–20 counting • estimation • number line • conservation • weekly review · Values: unity, fairness, honesty</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="hunt">1) Number Hunt</button>
+      <button class="tab" data-tab="estimate">2) Estimate vs Count</button>
+      <button class="tab" data-tab="line">3) Number Line 0–20</button>
+      <button class="tab" data-tab="conserve">4) Same Number, New Shape</button>
+      <button class="tab" data-tab="review">5) Bingo & Mixed Quiz</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="card" id="main">
+      <h2 style="margin:0 0 8px">Activity Panel</h2>
+      <div id="view"></div>
+    </section>
+
+    <aside class="card">
+      <h3 style="margin:0 0 8px">Teacher Prompts & Value Links</h3>
+      <ul class="muted" style="margin-left:18px">
+        <li>Begin with salam and a short dua for knowledge & unity.</li>
+        <li>Connect to life: count family members, Prophets, raka’ah, etc.</li>
+        <li>Encourage pair help (ukhuwwah) and honest counting.</li>
+      </ul>
+      <div class="result">Score: <b id="score">0</b> · Attempts: <b id="tries">0</b></div>
+    </aside>
+  </div>
+
+  <script>
+    const $=(s,el=document)=>el.querySelector(s); const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+    let SCORE=0, TRIES=0; const add=(n)=>{SCORE+=n; TRIES++; $('#score').textContent=SCORE; $('#tries').textContent=TRIES};
+    $$('.tab').forEach(t=>t.addEventListener('click',()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); const id=t.dataset.tab; if(id==='hunt') renderHunt(); if(id==='estimate') renderEstimate(); if(id==='line') renderLine(); if(id==='conserve') renderConserve(); if(id==='review') renderReview(); }));
+
+    // 1) Number Hunt — show objects sets 0–10 and digits 0–20
+    function renderHunt(){
+      const v=$('#view'); v.innerHTML='';
+      let target = Math.floor(Math.random()*21); let upto=10; // less able default
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row">
+          <label>Objects range:</label>
+          <select id="rng"><option value="10">0–10 (support)</option><option value="20">0–20 (challenge)</option></select>
+          <button id="new" class="primary">New Set</button>
+        </div>
+        <div class="grid" style="grid-template-columns:1fr 1fr;align-items:start;margin-top:8px">
+          <div>
+            <div class="muted">Count the dots and type the number</div>
+            <div id="dots" class="box"></div>
+            <div class="row" style="margin-top:8px"><input id="ans" placeholder="How many?"/> <button id="check" class="primary">Check</button></div>
+            <div class="result" id="out"></div>
+          </div>
+          <div>
+            <div class="muted">Match digit → word (practice spelling)</div>
+            <div class="chips" id="digits"></div>
+            <div class="chips" id="words"></div>
+            <button id="verify">Verify Matches</button>
+            <div class="result" id="out2"></div>
+          </div>
+        </div>
+        <div class="result muted">Value link: Counting carefully is honesty; helping friends shows ukhuwwah.</div>
+      `; v.appendChild(ui);
+      const WORDS={0:'zero',1:'one',2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven',8:'eight',9:'nine',10:'ten',11:'eleven',12:'twelve',13:'thirteen',14:'fourteen',15:'fifteen',16:'sixteen',17:'seventeen',18:'eighteen',19:'nineteen',20:'twenty'};
+      function drawDots(){ const d=$('#dots'); d.innerHTML=''; const n=Math.floor(Math.random()*(upto+1)); target=n; const grid=document.createElement('div'); grid.className='dots'; for(let i=0;i<n;i++){ const dot=document.createElement('div'); dot.className='dot'; grid.appendChild(dot);} d.appendChild(grid); $('#ans').value=''; $('#out').textContent=''; }
+      function renderMatch(){ const ds=$('#digits'), ws=$('#words'); ds.innerHTML=''; ws.innerHTML=''; const nums=[...Array(6)].map(()=>Math.floor(Math.random()*21)); nums.forEach(n=>{ const chip=document.createElement('div'); chip.className='chip'; chip.textContent=n; chip.id='d_'+n+'_'+Math.random().toString(36).slice(2,5); chip.draggable=true; chip.dataset.n=n; chip.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',chip.id)); ds.appendChild(chip); }); const shuffled=[...new Set(nums)].sort(()=>0.5-Math.random()); shuffled.forEach(n=>{ const slot=document.createElement('div'); slot.className='slot'; slot.style.minHeight='42px'; slot.dataset.n=n; slot.innerHTML='<b>'+WORDS[n]+'</b><div class="muted" style="font-size:12px">drop digit here</div>'; slot.addEventListener('dragover',e=>{e.preventDefault(); slot.style.outline='2px solid var(--ok)'}); slot.addEventListener('dragleave',()=>slot.style.outline='none'); slot.addEventListener('drop',e=>{e.preventDefault(); slot.style.outline='none'; const id=e.dataTransfer.getData('text/plain'); const chip=document.getElementById(id); if(chip) slot.appendChild(chip); }); ws.appendChild(slot); }); }
+      $('#rng').onchange=(e)=>{ upto=Number(e.target.value); drawDots(); };
+      $('#new').onclick=()=>{ drawDots(); renderMatch(); };
+      $('#check').onclick=()=>{ const got=Number($('#ans').value); if(got===target){ add(2); $('#out').innerHTML='<span class="ok">Correct counting!</span>'; } else { add(0); $('#out').innerHTML=`<span class="err">Try again.</span> There are <b>${target}</b>`; } setTimeout(drawDots,900); };
+      $('#verify').onclick=()=>{ let ok=true; const missed=[]; $$('#words .slot').forEach(slot=>{ const child=[...slot.children].find(c=>c.classList && c.classList.contains('chip') && c.dataset.n); if(!child || Number(child.dataset.n)!==Number(slot.dataset.n)){ ok=false; missed.push(slot.dataset.n); } }); if(ok){ add(3); $('#out2').innerHTML='<span class="ok">All correct!</span>'; } else { add(0); $('#out2').innerHTML='<span class="err">Fix these:</span> '+missed.join(', '); } };
+      drawDots(); renderMatch();
+    }
+
+    // 2) Estimate vs Count — show random dots 1–50; estimate then reveal & record
+    function renderEstimate(){
+      const v=$('#view'); v.innerHTML='';
+      let actual=0; const history=[];
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row"><button id="new" class="primary">New Jar</button><span class="muted">Estimate first, then reveal and compare.</span></div>
+        <div class="box" id="jar" style="min-height:150px"></div>
+        <div class="row" style="margin-top:8px"><input id="guess" placeholder="Your estimate"/> <button id="reveal">Reveal & Record</button></div>
+        <div class="result" id="out"></div>
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+          <div class="box"><b>History (Est. vs Actual vs Difference)</b><div id="hist" class="muted"></div></div>
+          <div class="box"><b>Reflection</b><div class="muted">Estimating helps in daily life (coins, dates). Honesty: change your guess if counting shows a different number.</div></div>
+        </div>
+      `; v.appendChild(ui);
+      const draw=()=>{ const jar=$('#jar'); jar.innerHTML=''; actual=Math.floor(Math.random()*50)+1; const grid=document.createElement('div'); grid.className='dots'; grid.style.gridTemplateColumns='repeat(10,1fr)'; for(let i=0;i<actual;i++){ const dot=document.createElement('div'); dot.className='dot'; grid.appendChild(dot);} jar.appendChild(grid); $('#guess').value=''; $('#out').textContent=''; }
+      const updateHist=()=>{ $('#hist').innerHTML = history.map(h=>`Est: ${h.g} | Actual: ${h.a} | Diff: ${Math.abs(h.g-h.a)}`).join('<br>'); };
+      $('#new').onclick=draw; draw();
+      $('#reveal').onclick=()=>{ const g=Number($('#guess').value); if(!Number.isFinite(g)){ $('#out').innerHTML='<span class="err">Enter a number.</span>'; return;} history.unshift({g,a:actual}); if(Math.abs(g-actual)<=2){ add(2); $('#out').innerHTML=`<span class="ok">Great estimate!</span> Actual was <b>${actual}</b>`; } else { add(0); $('#out').innerHTML=`<span class="err">Not close.</span> Actual was <b>${actual}</b>`; } updateHist(); setTimeout(draw,900); };
+    }
+
+    // 3) Number Line 0–20 — fill missing numbers; count on/back
+    function renderLine(){
+      const v=$('#view'); v.innerHTML='';
+      let missing=[]; const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row"><button id="gen" class="primary">Generate Line</button>
+          <label>Mode</label>
+          <select id="mode"><option value="fill">Fill the blanks</option><option value="forward">Count forward</option><option value="back">Count back</option><option value="skip2">Skip count by 2s</option></select>
+        </div>
+        <div id="line" class="board" style="margin-top:10px"></div>
+        <div class="row" style="margin-top:8px"><input id="ans" placeholder="Type missing numbers (e.g., 4 5 6)" style="min-width:320px"/> <button id="check" class="primary">Check</button></div>
+        <div class="result" id="out"></div>
+        <div class="result muted">Islamic link: Counting raka’ah uses counting on/back carefully.</div>
+      `; v.appendChild(ui);
+      function gen(){ const mode=$('#mode').value; const line=$('#line'); line.innerHTML=''; missing=[]; const blanks=new Set(); while(blanks.size<3){ blanks.add(Math.floor(Math.random()*21)); } for(let i=0;i<=20;i++){ const b=document.createElement('div'); b.className='box'; if(mode==='fill' && blanks.has(i)){ b.textContent='?'; missing.push(i);} else { b.textContent=i; } line.appendChild(b);} if(mode==='forward'){ const start=Math.floor(Math.random()*16); missing=[start+1,start+2,start+3]; highlight(start,'Go →'); } if(mode==='back'){ const start=Math.floor(Math.random()*20)+1; missing=[start-1,start-2,start-3]; highlight(start,'Go ←'); } if(mode==='skip2'){ const start=0; missing=[2,4,6,8]; highlight(start,'+2 +2 +2'); }
+      }
+      function highlight(i,label){ const tiles=$$('#line .box'); tiles[i].style.outline='2px solid var(--ok)'; tiles[i].innerHTML = tiles[i].textContent+`<div class="muted" style="font-size:11px">${label}</div>`; }
+      $('#gen').onclick=gen; gen();
+      $('#check').onclick=()=>{ const got=($('#ans').value||'').split(/[,\s]+/).filter(Boolean).map(x=>Number(x)); const want=missing; if(got.length!==want.length){ $('#out').innerHTML='<span class="err">Enter '+want.length+' numbers.</span>'; return;} const ok=got.every((x,i)=>x===want[i]); if(ok){ add(3); $('#out').innerHTML='<span class="ok">Nice sequencing!</span>'; } else { add(0); $('#out').innerHTML=`<span class="err">Not yet.</span> Answer: <b>${want.join(' ')}</b>`; } setTimeout(gen,900); };
+    }
+
+    // 4) Conservation — same number, different arrangement
+    function renderConserve(){
+      const v=$('#view'); v.innerHTML='';
+      let n=[4,5,6,7,8][Math.floor(Math.random()*5)];
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row"><button id="new" class="primary">New Sets</button><span class="muted">Do these two pictures have the <b>same number</b> of dots?</span></div>
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+          <div class="box" id="a"></div>
+          <div class="box" id="b"></div>
+        </div>
+        <div class="row" style="margin-top:8px"><button id="yes" class="primary">Yes</button><button id="no" class="warn">No</button></div>
+        <div class="result" id="out"></div>
+        <div class="result muted">Conservation idea: same amount can look different. Fair sharing means equal amounts.</div>
+      `; v.appendChild(ui);
+      function draw(){ const A=$('#a'),B=$('#b'); A.innerHTML=''; B.innerHTML=''; const g1=document.createElement('div'); g1.className='dots'; g1.style.gridTemplateColumns='repeat(5,1fr)'; for(let i=0;i<n;i++){ const d=document.createElement('div'); d.className='dot'; g1.appendChild(d);} A.appendChild(g1); const g2=document.createElement('div'); g2.className='dots'; g2.style.gridTemplateColumns='repeat(3,1fr)'; for(let i=0;i<n;i++){ const d=document.createElement('div'); d.className='dot'; g2.appendChild(d);} B.appendChild(g2); $('#out').textContent=''; }
+      $('#new').onclick=()=>{ n=[4,5,6,7,8][Math.floor(Math.random()*5)]; draw(); };
+      $('#yes').onclick=()=>{ add(2); $('#out').innerHTML='<span class="ok">Correct! Same number arranged differently.</span>'; setTimeout(draw,800); };
+      $('#no').onclick=()=>{ add(0); $('#out').innerHTML='<span class="err">Check again.</span> They are the same count.'; setTimeout(draw,800); };
+      draw();
+    }
+
+    // 5) Review — Bingo + mixed quick quiz
+    function renderReview(){
+      const v=$('#view'); v.innerHTML='';
+      const pool=[...Array(21).keys()]; const picks=pool.sort(()=>0.5-Math.random()).slice(0,9);
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <div class="muted">Number Bingo (3×3) — click to mark</div>
+            <div id="bingo" class="bingo"></div>
+            <button id="checkB" class="primary" style="margin-top:8px">Check Bingo</button>
+            <div class="result" id="bout"></div>
+          </div>
+          <div>
+            <div class="muted">Mixed Quick Quiz</div>
+            <div id="q" class="box">—</div>
+            <div class="row" style="margin-top:8px"><input id="a" placeholder="Answer"/> <button id="next" class="primary">Submit</button></div>
+            <div class="result" id="qout"></div>
+          </div>
+        </div>
+      `; v.appendChild(ui);
+      // Bingo
+      const b=$('#bingo'); b.innerHTML=''; picks.forEach(n=>{ const t=document.createElement('div'); t.className='tile'; t.textContent=n; t.onclick=()=>t.classList.toggle('mark'); b.appendChild(t); });
+      $('#checkB').onclick=()=>{ const marked=$$('#bingo .tile.mark').length; if(marked>=5){ add(3); $('#bout').innerHTML='<span class="ok">Nice! You marked enough — BINGO!</span>'; } else { add(0); $('#bout').innerHTML='<span class="err">Keep going.</span> Mark at least 5.'; } };
+      // Quiz
+      const WORDS={0:'zero',1:'one',2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven',8:'eight',9:'nine',10:'ten',11:'eleven',12:'twelve',13:'thirteen',14:'fourteen',15:'fifteen',16:'sixteen',17:'seventeen',18:'eighteen',19:'nineteen',20:'twenty'};
+      const qs=[
+        ()=>({q:'How many? (fingers)  ✋✋', a:'10'}),
+        ()=>{ const n=Math.floor(Math.random()*11); return {q:`Spell this: ${n}`, a:WORDS[n]}; },
+        ()=>{ const a=Math.floor(Math.random()*6), b=Math.floor(Math.random()*6); return {q:`Count on: ${a} → ${a+1} → ?`, a:String(a+2)}; },
+        ()=>({q:'Is 0 a number? (yes/no)', a:'yes'}),
+        ()=>{ const n=Math.floor(Math.random()*11)*2; return {q:`Half of ${n} is`, a:String(n/2)}; },
+      ]; let i=0; function ask(){ const maker=qs[i%qs.length]; const item=maker(); $('#q').textContent=item.q; $('#q').dataset.ans=item.a; $('#a').value=''; $('#qout').textContent=''; }
+      $('#next').onclick=()=>{ const want=$('#q').dataset.ans; const got=$('#a').value.trim().toLowerCase(); if(got===String(want).toLowerCase()){ add(2); $('#qout').innerHTML='<span class="ok">Correct!</span>'; } else { add(0); $('#qout').innerHTML='<span class="err">Answer:</span> <b>'+want+'</b>'; } i++; setTimeout(ask,900); };
+      ask();
+    }
+
+    // boot
+    renderHunt();
+  </script>
+</body>
+</html>
