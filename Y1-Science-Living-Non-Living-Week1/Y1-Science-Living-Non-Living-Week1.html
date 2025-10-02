@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Y1 Science Interactive — Living & Non‑Living</title>
+  <style>
+    :root{--bg:#0f172a;--panel:#0b1220;--card:#111827;--muted:#9aa4b2;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--blue:#3b82f6}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;background:var(--bg);color:#e5e7eb}
+    header{position:sticky;top:0;background:var(--panel);border-bottom:1px solid #1f2937;padding:16px;z-index:10}
+    h1{margin:0;font-size:20px}
+    .sub{color:var(--muted);font-size:13px}
+    .wrap{max-width:1200px;margin:16px auto;padding:0 16px;display:grid;gap:16px}
+    @media(min-width:1000px){.wrap{grid-template-columns:1.35fr .65fr}}
+    .card{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:16px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+    .tab{background:var(--panel);border:1px solid #243042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+    .tab.active{border-color:var(--ok);box-shadow:0 0 0 2px #14532d inset}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .col{display:flex;flex-direction:column;gap:8px}
+    button{background:var(--panel);border:1px solid #253042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+    button.primary{background:linear-gradient(135deg,#16a34a,#22c55e);border:none;color:#06210d}
+    button.warn{background:#1f1300;border:1px solid #6b4e00;color:#ffd166}
+    input,select,textarea{background:var(--panel);border:1px solid #253042;border-radius:10px;color:#e5e7eb;padding:10px}
+    textarea{min-height:90px}
+    .result{margin-top:10px;padding:10px;border-radius:10px;background:var(--panel);border:1px solid #1f2937}
+    .ok{color:var(--ok)} .err{color:var(--err)} .muted{color:var(--muted)}
+    .grid{display:grid;gap:12px}
+    .slot{border:2px dashed #334155;border-radius:12px;min-height:64px;padding:8px}
+    .chip{padding:10px 12px;border:1px solid #2a3646;border-radius:12px;background:#0b1220;display:inline-flex;gap:8px;align-items:center;cursor:grab;margin:6px}
+    .pill{padding:6px 10px;border:1px solid #253042;border-radius:999px;background:#0b1220}
+    .panel{background:#0b1220;border:1px solid #253042;border-radius:12px;padding:10px}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .score{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .tiny{font-size:12px;color:#94a3b8}
+    .tag{font-size:12px;padding:2px 6px;border:1px solid #2a3646;border-radius:999px}
+    .bigpic{width:100%;height:220px;border:1px solid #253042;border-radius:12px;background:#0b1220;display:flex;align-items:center;justify-content:center;font-size:48px}
+    .drawpad{width:100%;height:280px;border:1px solid #253042;border-radius:12px;background:#0b1220;position:relative}
+    canvas{max-width:100%}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Y1 Science Interactive — Living & Non‑Living</h1>
+    <div class="sub">Lesson set: Intro (Alive or Not) • Grow & Breathe • Move & Babies • Non‑living Review · Values: Allah created all living things • Amanah: care for life</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="intro">1) Alive or Not?</button>
+      <button class="tab" data-tab="grow">2) Grow & Breathe</button>
+      <button class="tab" data-tab="move">3) Move & Babies</button>
+      <button class="tab" data-tab="review">4) Non‑living & Review</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="card" id="main">
+      <h2 style="margin:0 0 8px">Activity Panel</h2>
+      <div id="view"></div>
+    </section>
+
+    <aside class="card">
+      <h3 style="margin:0 0 8px">Teacher Prompts & Value Links</h3>
+      <div class="panel">
+        <ul class="muted" style="margin-left:18px">
+          <li>Begin with salam & short dua. Recap previous lesson briefly.</li>
+          <li>Key Qs: “Does it eat/drink?”, “Can it grow?”, “Does it move by itself?”, “Can it have babies?”</li>
+          <li>Values: “Allah created all living things.” “Caring for living things is our <b>amanah</b>.”</li>
+          <li>Differentiation: use Hints/Icons; accept verbal answers; draw or act out.</li>
+        </ul>
+      </div>
+      <div class="result score"><div class="panel">Stars<br><b id="stars">★☆☆</b></div><div class="panel">Correct<br><b id="score">0</b></div><div class="panel">Tries<br><b id="tries">0</b></div></div>
+    </aside>
+  </div>
+
+  <script>
+    const $=(s,el=document)=>el.querySelector(s); const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+    let SCORE=0, TRIES=0; const add=(n)=>{SCORE+=n; TRIES++; $('#score').textContent=SCORE; $('#tries').textContent=TRIES; const star = SCORE>=18? '★★★': SCORE>=10? '★★☆': SCORE>=5? '★☆☆':'☆☆☆'; $('#stars').textContent=star; };
+    $$('.tab').forEach(t=>t.addEventListener('click',()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); const id=t.dataset.tab; if(id==='intro') renderIntro(); if(id==='grow') renderGrow(); if(id==='move') renderMove(); if(id==='review') renderReview(); }));
+
+    // ===== 1) INTRO: ALIVE OR NOT? =====
+    function renderIntro(){
+      const v=$('#view'); v.innerHTML='';
+      const pool=[
+        {name:'Penguin 🐧', living:true, reason:'It eats, breathes, grows, moves, and has babies.'},
+        {name:'Chair 🪑', living:false, reason:'It cannot eat, grow, breathe, or have babies.'},
+        {name:'Cat 🐱', living:true, reason:'It eats and breathes; it can have kittens.'},
+        {name:'Tree 🌳', living:true, reason:'It grows from a seed and breathes.'},
+        {name:'Rock 🪨', living:false, reason:'It does not move by itself or grow.'},
+        {name:'Toy Car 🚗', living:false, reason:'It only moves when pushed by people.'},
+        {name:'Flower 🌸', living:true, reason:'It grows and makes seeds.'},
+        {name:'Wall 🧱', living:false, reason:'It cannot breathe or have babies.'}
+      ];
+      const picks = pool.sort(()=>0.5-Math.random()).slice(0,6);
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row"><a class="pill" href="https://www.youtube.com/watch?v=p51FiPO2_kQ" target="_blank">▶ Watch: Living vs Non‑living (YouTube)</a><button id="regen" class="primary">New Cards</button> <button id="check" class="primary">Check</button> <button id="hint" class="warn">Hint</button></div>
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+          <div>
+            <div class="muted">Drag each card to ✔ Living or ✘ Non‑living</div>
+            <div id="cards" class="panel"></div>
+          </div>
+          <div class="two">
+            <div>
+              <div class="muted">✔ Living</div>
+              <div id="dzL" class="slot"></div>
+            </div>
+            <div>
+              <div class="muted">✘ Non‑living</div>
+              <div id="dzN" class="slot"></div>
+            </div>
+          </div>
+        </div>
+        <div class="result" id="out"></div>
+        <div class="panel muted">After sorting, ask 3 students to say: “<i>Alhamdulillah</i> for the ___.”</div>
+      `; v.appendChild(ui);
+      const draw=()=>{ const C=$('#cards'); C.innerHTML=''; picks.forEach((p,i)=>{ const el=document.createElement('div'); el.className='chip'; el.innerHTML=`<span>${p.name}</span>`; el.draggable=true; el.dataset.live=p.living?'1':'0'; el.title=p.reason; el.id='p_'+i; el.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',el.id)); C.appendChild(el); }); };
+      const drop=(el)=>{ el.addEventListener('dragover',e=>{e.preventDefault(); el.style.outline='2px solid var(--ok)'}); el.addEventListener('dragleave',()=>el.style.outline='none'); el.addEventListener('drop',e=>{e.preventDefault(); el.style.outline='none'; const id=e.dataTransfer.getData('text/plain'); const chip=document.getElementById(id); if(chip) el.appendChild(chip); }); };
+      drop($('#dzL')); drop($('#dzN'));
+      $('#regen').onclick=draw; draw();
+      $('#hint').onclick=()=>{ $('#out').innerHTML='Living things can <b>eat</b>, <b>breathe</b>, <b>grow</b>, <b>move by themselves</b>, and <b>have babies</b>.' };
+      $('#check').onclick=()=>{ const L=$$('#dzL .chip'), N=$$('#dzN .chip'); let ok=true; const errs=[]; L.forEach(x=>{ if(x.dataset.live!=='1'){ ok=false; errs.push(x.textContent.trim()+" → not living"); } }); N.forEach(x=>{ if(x.dataset.live!=='0'){ ok=false; errs.push(x.textContent.trim()+" → not non‑living"); } }); if(L.length+N.length!==picks.length){ ok=false; errs.push('Some cards are unsorted'); }
+        if(ok){ add(5); $('#out').innerHTML='<span class="ok">Great job! Now, name 3 living things you saw in the video.</span>'; } else { add(0); $('#out').innerHTML='<span class="err">Recheck:</span> '+errs.join(' · '); }
+      };
+    }
+
+    // ===== 2) GROW & BREATHE =====
+    function renderGrow(){
+      const v=$('#view'); v.innerHTML='';
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="two">
+          <div>
+            <div class="muted">Act it out: breathe in/out • grow from a seed</div>
+            <div class="bigpic">🌱 → 🌳</div>
+            <div class="row" style="margin-top:8px"><button id="breath" class="primary">Breathe In / Out</button> <button id="grow" class="primary">Grow Plant</button> <button id="reset">Reset</button></div>
+            <div class="result" id="actOut"></div>
+          </div>
+          <div>
+            <div class="muted">Draw: a plant growing & a human breathing</div>
+            <div class="drawpad">
+              <canvas id="pad" width="520" height="280"></canvas>
+            </div>
+            <div class="row" style="margin-top:8px"><button id="clear" class="warn">Clear Drawing</button> <button id="save" class="primary">Save (local)</button></div>
+            <div class="result tiny">Teacher: “Allah gave us air to breathe.” Students: share 1 way to care for a living thing (cat, tree, flower).</div>
+          </div>
+        </div>
+      `; v.appendChild(ui);
+      // breathing/growing messages
+      let inhale=true, stage=0; $('#breath').onclick=()=>{ inhale=!inhale; $('#actOut').innerHTML = inhale? '<span class="ok">Inhale… chest up</span>' : '<span class="ok">Exhale… chest down</span>'; };
+      $('#grow').onclick=()=>{ stage=(stage+1)%4; const msg=['Seed','Sprout','Small plant','Big tree'][stage]; $('.bigpic').textContent = stage===0? '🌱' : stage===1? '🌱✨' : stage===2? '🌿' : '🌳'; $('#actOut').innerHTML='<span class="ok">'+msg+'</span>'; };
+      $('#reset').onclick=()=>{ inhale=true; stage=0; $('.bigpic').textContent='🌱 → 🌳'; $('#actOut').textContent=''; };
+      // simple drawing pad
+      const cv=$('#pad'), ctx=cv.getContext('2d'); ctx.lineWidth=4; ctx.lineCap='round'; ctx.strokeStyle='#22c55e';
+      let draw=false, lx=0, ly=0; cv.addEventListener('mousedown',e=>{ draw=true; const r=cv.getBoundingClientRect(); lx=e.clientX-r.left; ly=e.clientY-r.top; });
+      cv.addEventListener('mousemove',e=>{ if(!draw) return; const r=cv.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top; ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(x,y); ctx.stroke(); lx=x; ly=y; });
+      window.addEventListener('mouseup',()=>draw=false);
+      $('#clear').onclick=()=>{ ctx.clearRect(0,0,cv.width,cv.height); };
+      $('#save').onclick=()=>{ try{ const url=cv.toDataURL('image/png'); localStorage.setItem('y1_grow_pic', url); $('#actOut').innerHTML='<span class="ok">Saved to this device (localStorage).</span>'; }catch(e){ $('#actOut').innerHTML='<span class="err">Could not save.</span>'; } };
+    }
+
+    // ===== 3) MOVE & BABIES =====
+    function renderMove(){
+      const v=$('#view'); v.innerHTML='';
+      const animals=[
+        {name:'Cat & Kitten 🐱🐈', move:'walk', baby:true},
+        {name:'Bird & Chick 🐦🐣', move:'fly', baby:true},
+        {name:'Fish & Fry 🐟🐠', move:'swim', baby:true},
+        {name:'Rabbit & Kit 🐇🐰', move:'hop', baby:true},
+        {name:'Rock 🪨', move:'none', baby:false},
+        {name:'Chair 🪑', move:'none', baby:false}
+      ];
+      const picks = animals.sort(()=>0.5-Math.random()).slice(0,5);
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row"><button id="regen" class="primary">New Cards</button> <button id="check" class="primary">Check</button> <button id="hint" class="warn">Hint</button></div>
+        <div class="grid" style="grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px">
+          <div>
+            <div class="muted">Cards</div>
+            <div id="cards" class="panel"></div>
+          </div>
+          <div>
+            <div class="muted">Can it <b>move by itself?</b></div>
+            <div class="two">
+              <div><div class="muted">Yes (moves)</div><div id="dzM" class="slot"></div></div>
+              <div><div class="muted">No</div><div id="dzNM" class="slot"></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="muted">Does it have <b>babies?</b></div>
+            <div class="two">
+              <div><div class="muted">Yes (babies)</div><div id="dzB" class="slot"></div></div>
+              <div><div class="muted">No</div><div id="dzNB" class="slot"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="result" id="out"></div>
+        <div class="panel muted">Chant together: “Allah made animals alive — we care for them.”</div>
+      `; v.appendChild(ui);
+      const draw=()=>{ const C=$('#cards'); C.innerHTML=''; picks.forEach((p,i)=>{ const el=document.createElement('div'); el.className='chip'; el.textContent=p.name; el.draggable=true; el.dataset.move=p.move!=='none'?'1':'0'; el.dataset.baby=p.baby?'1':'0'; el.id='m_'+i; el.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',el.id)); C.appendChild(el); }); };
+      const drop=(el)=>{ el.addEventListener('dragover',e=>{e.preventDefault(); el.style.outline='2px solid var(--ok)'}); el.addEventListener('dragleave',()=>el.style.outline='none'); el.addEventListener('drop',e=>{e.preventDefault(); el.style.outline='none'; const id=e.dataTransfer.getData('text/plain'); const chip=document.getElementById(id); if(chip) el.appendChild(chip); }); };
+      ['dzM','dzNM','dzB','dzNB'].forEach(id=>drop($('#'+id)));
+      $('#regen').onclick=draw; draw();
+      $('#hint').onclick=()=>{ $('#out').innerHTML='Animals move (walk, fly, swim, hop) and have babies. Rocks/chairs do not.' };
+      $('#check').onclick=()=>{ let ok=true, errs=[]; $$('#dzM .chip').forEach(c=>{ if(c.dataset.move!=='1'){ ok=false; errs.push(c.textContent+' → cannot move'); } }); $$('#dzNM .chip').forEach(c=>{ if(c.dataset.move!=='0'){ ok=false; errs.push(c.textContent+' → does move'); } }); $$('#dzB .chip').forEach(c=>{ if(c.dataset.baby!=='1'){ ok=false; errs.push(c.textContent+' → no babies'); } }); $$('#dzNB .chip').forEach(c=>{ if(c.dataset.baby!=='0'){ ok=false; errs.push(c.textContent+' → has babies'); } }); if(ok){ add(6); $('#out').innerHTML='<span class="ok">Well done! Draw one animal with its baby outside (chalk) or on paper.</span>'; } else { add(0); $('#out').innerHTML='<span class="err">Recheck:</span> '+errs.join(' · '); }
+      };
+    }
+
+    // ===== 4) NON‑LIVING & REVIEW =====
+    function renderReview(){
+      const v=$('#view'); v.innerHTML='';
+      const quiz=[
+        {q:'Is a chair living? (yes/no)', a:'no'},
+        {q:'Do cats breathe? (yes/no)', a:'yes'},
+        {q:'Can plants grow? (yes/no)', a:'yes'},
+        {q:'Do rocks have babies? (yes/no)', a:'no'},
+        {q:'Say a non‑living thing in this classroom.', a:'chair'}
+      ]; let i=0, ok=0;
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="two">
+          <div>
+            <div class="muted">Non‑living: choose the right group</div>
+            <div class="row" style="margin:8px 0">
+              <button id="bins" class="primary">Sort Quick</button>
+              <button id="reset" class="warn">Reset</button>
+            </div>
+            <div class="three" id="nl"></div>
+          </div>
+          <div>
+            <div class="muted">Quick Quiz</div>
+            <div id="q" style="font-size:22px;margin-bottom:8px"></div>
+            <div class="row"><input id="a" placeholder="Type answer"/> <button id="next" class="primary">Submit</button></div>
+            <div class="result" id="out"></div>
+            <div class="panel tiny">Reminder: Non‑living things are useful (chairs, books, pencils) but living things need care.</div>
+          </div>
+        </div>
+      `; v.appendChild(ui);
+      // small sorter
+      const things=[
+        {name:'Book 📖', non:true}, {name:'Pencil ✏️', non:true}, {name:'Ball 🏀', non:true}, {name:'Cat 🐱', non:false}, {name:'Flower 🌸', non:false}, {name:'Rock 🪨', non:true}
+      ];
+      function drawBins(){ const NL=$('#nl'); NL.innerHTML=''; const bin1=document.createElement('div'); bin1.className='slot'; bin1.id='binNon'; bin1.style.minHeight='140px'; bin1.innerHTML='<b>✘ Non‑living</b>';
+        const bin2=document.createElement('div'); bin2.className='slot'; bin2.id='binLiv'; bin2.style.minHeight='140px'; bin2.innerHTML='<b>✔ Living</b>';
+        const pool=document.createElement('div'); pool.className='slot'; pool.id='pool'; pool.style.minHeight='140px'; pool.innerHTML='<b>Cards</b>';
+        $('#nl').appendChild(pool); $('#nl').appendChild(bin1); $('#nl').appendChild(bin2);
+        things.sort(()=>0.5-Math.random()).forEach((t,i)=>{ const el=document.createElement('div'); el.className='chip'; el.textContent=t.name; el.draggable=true; el.dataset.non=t.non?'1':'0'; el.id='q_'+i; el.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',el.id)); pool.appendChild(el); });
+        [pool,bin1,bin2].forEach(el=>{ el.addEventListener('dragover',e=>{e.preventDefault(); el.style.outline='2px solid var(--ok)'}); el.addEventListener('dragleave',()=>el.style.outline='none'); el.addEventListener('drop',e=>{e.preventDefault(); el.style.outline='none'; const id=e.dataTransfer.getData('text/plain'); const chip=document.getElementById(id); if(chip) el.appendChild(chip); }); });
+      }
+      drawBins();
+      $('#bins').onclick=()=>{ let ok=true, errs=[]; $$('#binNon .chip').forEach(c=>{ if(c.dataset.non!=='1'){ ok=false; errs.push(c.textContent+' → not non‑living'); } }); $$('#binLiv .chip').forEach(c=>{ if(c.dataset.non!=='0'){ ok=false; errs.push(c.textContent+' → is non‑living'); } }); if(ok){ add(4); $('#out').innerHTML='<span class="ok">Good sorting! Now finish the quiz.</span>'; } else { add(0); $('#out').innerHTML='<span class="err">Recheck:</span> '+errs.join(' · '); } };
+      $('#reset').onclick=drawBins;
+      // quiz
+      const norm=s=>String(s).toLowerCase().replace(/\s+/g,' ').trim();
+      function show(){ $('#q').textContent='Q'+(i+1)+'. '+quiz[i].q; $('#a').value=''; }
+      $('#next').onclick=()=>{ const want=quiz[i].a; const got=norm($('#a').value); const correct = got && (got.includes(norm(want)) || (want==='chair' && got.length>0)); if(correct){ ok++; add(2); $('#out').innerHTML='<span class="ok">Correct.</span>'; } else { add(0); $('#out').innerHTML='<span class="err">Sample answer:</span> <b>'+want+'</b>'; } i++; if(i<quiz.length){ setTimeout(show,600);} else { $('#q').innerHTML='Finished. Score: '+ok+'/'+quiz.length; $('#a').disabled=true; $('#next').disabled=true; } };
+      show();
+    }
+
+    // boot
+    renderIntro();
+  </script>
+</body>
+</html>
