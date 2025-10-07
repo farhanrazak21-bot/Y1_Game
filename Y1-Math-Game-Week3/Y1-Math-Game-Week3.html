@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Y1 Numbers Interactive — Count • Compare • Ordinals • Sequence • Review</title>
+<style>
+  :root{--bg:#0f172a;--panel:#0b1220;--card:#111827;--muted:#9aa4b2;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--blue:#38bdf8}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;background:var(--bg);color:#e5e7eb}
+  header{position:sticky;top:0;background:var(--panel);border-bottom:1px solid #1f2937;padding:16px;z-index:10}
+  h1{margin:0;font-size:20px}
+  .sub{color:var(--muted);font-size:13px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .tab{background:var(--panel);border:1px solid #243042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+  .tab.active{border-color:var(--ok);box-shadow:0 0 0 2px #14532d inset}
+  .wrap{max-width:1160px;margin:16px auto;padding:0 16px;display:grid;gap:16px}
+  @media(min-width:1100px){.wrap{grid-template-columns:1.45fr .55fr}}
+  .card{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:16px}
+  .panel{background:#0b1220;border:1px solid #253042;border-radius:12px;padding:10px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  button{background:var(--panel);border:1px solid #253042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+  button.primary{background:linear-gradient(135deg,#16a34a,#22c55e);border:none;color:#06210d}
+  button.warn{background:#1f1300;border:1px solid #6b4e00;color:#ffd166}
+  input,select{background:var(--panel);border:1px solid #253042;border-radius:10px;color:#e5e7eb;padding:10px}
+  .muted{color:var(--muted)} .ok{color:var(--ok)} .err{color:var(--err)}
+  .result{margin-top:10px;padding:10px;border-radius:10px;background:var(--panel);border:1px solid #1f2937}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+  .stage{min-height:260px;display:flex;align-items:center;justify-content:center;background:#0b1220;border:1px solid #253042;border-radius:14px;padding:10px}
+  .number-line{display:grid;grid-template-columns:repeat(21,1fr);gap:6px;width:100%}
+  .cell{background:#0f1a2a;border:1px solid #263246;border-radius:10px;padding:8px;text-align:center;cursor:pointer}
+  .cell.active{outline:2px solid #22c55e}
+  .big{font-size:40px}
+  .chip{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border:1px solid #2a3646;border-radius:12px;background:#0b1220;margin:6px;cursor:grab;font-size:22px}
+  .drop{min-height:64px;border:2px dashed #334155;border-radius:12px;padding:8px;display:flex;gap:8px;flex-wrap:wrap}
+  .badge{font-size:12px;padding:2px 6px;border:1px solid #2a3646;border-radius:999px}
+  .bigbtn{font-size:20px;padding:12px 16px}
+  .ordline{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .kid{width:64px;height:64px;border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid #2a3646;background:#0b1220}
+  .cardQ{background:#0b1220;border:1px solid #253042;border-radius:12px;padding:10px;margin-top:8px}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Y1 Numbers Interactive — Count • Compare • Ordinals • Sequence • Review</h1>
+    <div class="sub">Counting 0–20 forward/back • backwards 20–0 • compare < > = • ordinals 1st–10th • simple sequencing • weekly review</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="count">1) 🔢 Count Forward & Back</button>
+      <button class="tab" data-tab="compare">2) 🐊 Compare (<, >, =)</button>
+      <button class="tab" data-tab="ord">3) 🏁 Ordinals (1st–10th)</button>
+      <button class="tab" data-tab="seq">4) 🗂️ Story Sequencing</button>
+      <button class="tab" data-tab="review">5) 🧩 Weekly Review</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="card" id="main">
+      <h2 style="margin:0 0 8px">Activity Panel</h2>
+      <div id="view"></div>
+    </section>
+
+    <aside class="card">
+      <h3 style="margin:0 0 8px">Teacher Prompts & Integration</h3>
+      <div class="panel">
+        <ul class="muted" style="margin-left:18px">
+          <li>Begin with <b>dua</b> for knowledge & unity. Encourage: “Count blessings from Allah.”</li>
+          <li>Counting: ask “What comes <i>before</i> / <i>after</i>?”; highlight zero.</li>
+          <li>Compare: “hungry crocodile eats the <b>bigger</b> number.”</li>
+          <li>Ordinals: use a real line of learners; connect to order in <i>salah</i>.</li>
+          <li>Sequence: first → next → last. Talk about doing things in the right order.</li>
+        </ul>
+      </div>
+      <div class="result panel">Score: <b id="score">0</b> · Tries: <b id="tries">0</b> · Stars: <b id="stars">☆☆☆</b></div>
+    </aside>
+  </div>
+
+<script>
+const $=(s,el=document)=>el.querySelector(s); const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+let SCORE=0, TRIES=0; function add(n){SCORE+=n; TRIES++; $('#score').textContent=SCORE; $('#tries').textContent=TRIES; $('#stars').textContent= SCORE>=36?'★★★':SCORE>=20?'★★☆':SCORE>=10?'★☆☆':'☆☆☆';}
+$$('.tab').forEach(t=>t.addEventListener('click',()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); const id=t.dataset.tab; if(id==='count') renderCount(); if(id==='compare') renderCompare(); if(id==='ord') renderOrd(); if(id==='seq') renderSeq(); if(id==='review') renderReview(); }));
+
+// 1) COUNT FORWARD & BACK
+function renderCount(){
+  const v=$('#view'); v.innerHTML='';
+  const ui=document.createElement('div');
+  ui.innerHTML=`
+    <div class="row"><button class="primary" id="fwd">Count Forward 0→20</button> <button class="primary" id="back">Count Back 20→0</button> <button class="warn" id="miss">Missing Numbers</button></div>
+    <div class="stage"><div id="line" class="number-line"></div></div>
+    <div class="result" id="out"></div>`;
+  v.appendChild(ui);
+  const host=$('#line'); function draw(seq, blanks=[]){ host.innerHTML=''; seq.forEach((n,i)=>{ const c=document.createElement('div'); c.className='cell'; c.dataset.n=n; c.textContent= blanks.includes(i)?'?' : n; if(blanks.includes(i)){ c.contentEditable=true; c.oninput=()=>{ c.textContent=c.textContent.replace(/[^0-9]/g,'').slice(0,2); }; }
+    host.appendChild(c); }); }
+  const forward=[...Array(21).keys()]; const backward=[...Array(21).keys()].reverse();
+  $('#fwd').onclick=()=>{ draw(forward); $('#out').textContent='Tap numbers in order!'; $$('.cell').forEach((c,i)=>{ c.onclick=()=>{ if(i===0||$$('.cell')[i-1].classList.contains('active')){ c.classList.add('active'); if(i===20){ add(4); $('#out').innerHTML='<span class="ok">Well done! Forward complete.</span>'; } } }; }); };
+  $('#back').onclick=()=>{ draw(backward); $('#out').textContent='Tap numbers backwards!'; $$('.cell').forEach((c,i)=>{ c.onclick=()=>{ if(i===0||$$('.cell')[i-1].classList.contains('active')){ c.classList.add('active'); if(i===20){ add(4); $('#out').innerHTML='<span class="ok">Great! Backwards complete.</span>'; } } }; }); };
+  $('#miss').onclick=()=>{ const seq=forward; const holes=[3,6,9,12,15]; draw(seq,holes); $('#out').innerHTML='Type the <b>missing</b> numbers, then press Check.'; const btn=document.createElement('button'); btn.textContent='Check'; btn.className='primary'; btn.onclick=()=>{ let ok=true; holes.forEach(i=>{ const c=$$('.cell')[i]; if(String(c.textContent)!==String(seq[i])) ok=false; }); if(ok){ add(5); $('#out').innerHTML='<span class="ok">All correct!</span>'; } else { add(0); $('#out').innerHTML='<span class="err">Try again. Tip: count carefully.</span>'; } }; $('#out').appendChild(btn); };
+  $('#fwd').click();
+}
+
+// 2) COMPARE (<, >, =)
+function renderCompare(){
+  const v=$('#view'); v.innerHTML='';
+  const ui=document.createElement('div');
+  ui.innerHTML=`
+  <div class="row"><button class="primary" id="new">New Pair</button>
+    <button class="bigbtn" data-s=">">🐊 &gt;</button>
+    <button class="bigbtn" data-s="<">🐊 &lt;</button>
+    <button class="bigbtn" data-s="=">=</button>
+  </div>
+  <div class="stage"><div id="pair" class="big mono"></div></div>
+  <div class="result" id="cmpOut"></div>`;
+  v.appendChild(ui);
+  let A=0,B=0; function newPair(){ A=Math.floor(Math.random()*21); B=Math.floor(Math.random()*21); $('#pair').textContent=`${A}  ?  ${B}`; $('#cmpOut').textContent='Pick the correct sign!'; }
+  newPair();
+  $$('.bigbtn').forEach(b=>b.onclick=()=>{ const s=b.dataset.s||b.textContent; const ok=(s==='>'&&A>B)||(s==='<'&&A<B)||(s==='='&&A===B); if(ok){ add(3); $('#pair').textContent=`${A}  ${s}  ${B}`; $('#cmpOut').innerHTML='<span class="ok">Correct!</span>'; } else { add(0); $('#cmpOut').innerHTML='<span class="err">Oops. Try again.</span>'; } });
+  $('#new').onclick=newPair;
+}
+
+// 3) ORDINALS
+function renderOrd(){
+  const v=$('#view'); v.innerHTML='';
+  const ui=document.createElement('div');
+  ui.innerHTML=`
+    <div class="row"><button class="primary" id="make">New Line (1st–10th)</button> <button class="primary" id="ask">Ask a Question</button></div>
+    <div class="stage" id="ordStage"></div>
+    <div class="result" id="ordOut"></div>`;
+  v.appendChild(ui);
+  let kids=[]; function make(){ kids=Array.from({length:10},(_,i)=>({n:i+1, name:'Kid '+(i+1)})); const host=$('#ordStage'); host.innerHTML='<div class="ordline">'+kids.map(k=>`<div class="kid">${k.n}</div>`).join('')+'</div>'; $('#ordOut').innerHTML='Use: 1st, 2nd, 3rd, … 10th'; }
+  function nth(n){ if(n===1)return '1st'; if(n===2)return '2nd'; if(n===3)return '3rd'; return n+'th'; }
+  function ask(){ const k=kids[Math.floor(Math.random()*kids.length)]; $('#ordOut').innerHTML=`Who is the <b>${nth(k.n)}</b>? Type the number:`; const inp=document.createElement('input'); inp.style.width='120px'; const btn=document.createElement('button'); btn.textContent='Check'; btn.className='primary'; btn.onclick=()=>{ if(Number(inp.value)===k.n){ add(3); $('#ordOut').innerHTML='<span class="ok">Correct!</span>'; } else { add(0); $('#ordOut').innerHTML='<span class="err">Answer: '+k.n+' ('+nth(k.n)+')</span>'; } }; $('#ordOut').append(' ',inp,' ',btn); }
+  $('#make').onclick=make; $('#ask').onclick=ask; make();
+}
+
+// 4) STORY SEQUENCING (drag 1→5)
+function renderSeq(){
+  const v=$('#view'); v.innerHTML='';
+  const ui=document.createElement('div');
+  ui.innerHTML=`
+    <div class="row"><button class="primary" id="newS">New Story Cards</button> <button class="primary" id="checkS">Check Order</button> <button class="warn" id="resetS">Reset</button></div>
+    <div class="panel" style="margin-top:8px">
+      <div class="badge">Drag 1 → 5 (First → Last)</div>
+      <div id="pool"></div>
+      <div class="row" style="margin-top:8px"><div>
+        <div class="badge">Sequence Rail</div>
+        <div id="rail" class="drop"></div>
+      </div></div>
+    </div>
+    <div class="result" id="seqOut"></div>`;
+  v.appendChild(ui);
+  const steps=['1','2','3','4','5']; function makeChip(n){ const d=document.createElement('div'); d.className='chip'; d.textContent=n; d.id='c_'+n; d.draggable=true; d.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',d.id)); return d; }
+  function refreshPool(){ const pool=$('#pool'); pool.innerHTML=''; const mix=[...steps].sort(()=>Math.random()-0.5); mix.forEach(s=>pool.appendChild(makeChip(s))); }
+  function hookDZ(){ const dz=$('#rail'); dz.addEventListener('dragover',e=>{e.preventDefault(); dz.style.outline='2px solid var(--ok)'}); dz.addEventListener('dragleave',()=>dz.style.outline='none'); dz.addEventListener('drop',e=>{e.preventDefault(); dz.style.outline='none'; const id=e.dataTransfer.getData('text/plain'); const chip=document.getElementById(id); if(chip){ dz.appendChild(chip); }}); }
+  refreshPool(); hookDZ();
+  $('#newS').onclick=()=>{ refreshPool(); $('#rail').innerHTML=''; $('#seqOut').textContent=''; };
+  $('#resetS').onclick=()=>{ refreshPool(); $('#rail').innerHTML=''; $('#seqOut').textContent=''; };
+  $('#checkS').onclick=()=>{ const got=$$('#rail .chip').map(x=>x.textContent).join(''); if(got==='12345'){ add(5); $('#seqOut').innerHTML='<span class="ok">Great sequencing! First → Last is correct.</span>'; } else { add(0); $('#seqOut').innerHTML='<span class="err">Try again. Tip: say “first, next, next, then last”.</span>'; } };
+}
+
+// 5) WEEKLY REVIEW QUIZ
+function renderReview(){
+  const v=$('#view'); v.innerHTML='';
+  const ui=document.createElement('div');
+  ui.innerHTML=`
+    <div class="row"><button class="primary" id="newQ">New 8‑Q Set</button> <button class="primary" id="checkQ">Check</button> <button class="warn" id="hint">Hints</button></div>
+    <div id="qs" style="margin-top:8px"></div>
+    <div id="out" class="result"></div>`; v.appendChild(ui);
+  const types=['next','prev','between','compare','ordinal'];
+  function makeQ(){ const t=types[Math.floor(Math.random()*types.length)];
+    if(t==='next'){ const n=Math.floor(Math.random()*20); return {t:`What comes <b>after</b> ${n}?`, a:String(n+1)}; }
+    if(t==='prev'){ const n=1+Math.floor(Math.random()*20); return {t:`What comes <b>before</b> ${n}?`, a:String(n-1)}; }
+    if(t==='between'){ const n=Math.floor(Math.random()*19); return {t:`What number is <b>between</b> ${n} and ${n+2}?`, a:String(n+1)}; }
+    if(t==='compare'){ const A=Math.floor(Math.random()*21), B=Math.floor(Math.random()*21); const ans=A>B?'>':A<B?'<':'='; return {t:`Fill <, >, = : ${A} __ ${B}`, a:ans}; }
+    // ordinal
+    const k=1+Math.floor(Math.random()*10); const suff=k===1?'1st':k===2?'2nd':k===3?'3rd':k+'th'; return {t:`Who is the <b>${suff}</b>? Type the number.`, a:String(k)};
+  }
+  let set=[]; function gen(){ set=Array.from({length:8},makeQ); draw(); $('#out').textContent=''; }
+  function draw(){ const host=$('#qs'); host.innerHTML=''; set.forEach((q,i)=>{ host.innerHTML+=`<div class="cardQ"><div>${q.t}</div><input id="ans_${i}" style="width:160px" placeholder="Answer"/></div>`; }); }
+  gen();
+  $('#newQ').onclick=gen; $('#hint').onclick=()=>$('#out').innerHTML='Hints: count carefully; hungry crocodile eats bigger number; 1st→2nd→3rd…';
+  $('#checkQ').onclick=()=>{ let ok=0; set.forEach((q,i)=>{ const v=$(`#ans_${i}`).value.trim(); if(v===q.a) ok++; }); if(ok===set.length){ add(10); $('#out').innerHTML='<span class="ok">Excellent — full marks!</span>'; } else { add(0); $('#out').innerHTML='<span class="err">Correct:</span> '+ok+' / '+set.length+' · Aim for 6+/8.'; }
+  };
+}
+
+// boot
+renderCount();
+</script>
+</body>
+</html>
