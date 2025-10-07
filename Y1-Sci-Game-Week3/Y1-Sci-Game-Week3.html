@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Y1 Science — Plants Interactive</title>
+<style>
+  :root{--bg:#0f172a;--panel:#0b1220;--card:#111827;--muted:#9aa4b2;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--blue:#38bdf8}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;background:var(--bg);color:#e5e7eb}
+  header{position:sticky;top:0;background:var(--panel);border-bottom:1px solid #1f2937;padding:16px;z-index:10}
+  h1{margin:0;font-size:20px}
+  .sub{color:var(--muted);font-size:13px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .tab{background:var(--panel);border:1px solid #243042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+  .tab.active{border-color:var(--ok);box-shadow:0 0 0 2px #14532d inset}
+  .wrap{max-width:1180px;margin:16px auto;padding:0 16px;display:grid;gap:16px}
+  @media(min-width:1100px){.wrap{grid-template-columns:1.45fr .55fr}}
+  .card{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:16px}
+  .panel{background:#0b1220;border:1px solid #253042;border-radius:12px;padding:10px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .result{margin-top:10px;padding:10px;border-radius:10px;background:var(--panel);border:1px solid #1f2937}
+  .ok{color:var(--ok)} .err{color:var(--err)} .muted{color:var(--muted)}
+  button{background:var(--panel);border:1px solid #253042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+  button.primary{background:linear-gradient(135deg,#16a34a,#22c55e);border:none;color:#06210d}
+  button.warn{background:#1f1300;border:1px solid #6b4e00;color:#ffd166}
+  input,select{background:var(--panel);border:1px solid #253042;border-radius:10px;color:#e5e7eb;padding:10px}
+  .stage{min-height:320px;display:flex;align-items:center;justify-content:center;background:#0b1220;border:1px solid #253042;border-radius:14px;padding:12px}
+  .badge{font-size:12px;padding:2px 6px;border:1px solid #2a3646;border-radius:999px}
+  .grid{display:grid;gap:10px}
+  .grid-2{grid-template-columns:repeat(2,1fr)}
+  .tile{background:#0f1a2a;border:1px solid #263246;border-radius:12px;padding:12px;text-align:center}
+  .tile.sel{outline:3px solid #22c55e}
+  .drop{min-height:64px;border:2px dashed #334155;border-radius:12px;padding:8px;display:flex;gap:8px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border:1px solid #2a3646;border-radius:999px;background:#0b1220;margin:6px;cursor:grab}
+  svg{max-width:100%;height:260px}
+  .tag{font-size:12px;color:#9aa4b2}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Y1 Science — Plants Interactive (Living Things & Plant Parts)</h1>
+    <div class="sub">Plants are living • Plant needs • Parts of a plant • Garden explorer quiz • Reflection & values</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="lead">0) 🌱 Lead‑in</button>
+      <button class="tab" data-tab="living">1) 🌿 Plants are Living</button>
+      <button class="tab" data-tab="parts">2) 🪴 Label Plant Parts</button>
+      <button class="tab" data-tab="grow">3) 🌧️ Help the Plant Grow</button>
+      <button class="tab" data-tab="quiz">4) 🧩 Garden Quiz</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="card" id="main">
+      <h2 style="margin:0 0 8px">Activity Panel</h2>
+      <div id="view"></div>
+    </section>
+
+    <aside class="card">
+      <h3 style="margin:0 0 8px">Teacher Prompts & Integration</h3>
+      <div class="panel">
+        <ul class="muted" style="margin-left:18px">
+          <li>Start with a warm greeting & short <b>dua</b> for knowledge.</li>
+          <li>Islamic link: <i>Allah is the Creator</i> — plants are blessings (food, shade, oxygen).</li>
+          <li>Eco link: care for plants, do not pluck; reuse fallen leaves for models.</li>
+          <li>Differentiation: fewer choices / larger pictures for less‑able; add angle/extra facts for more‑able.</li>
+        </ul>
+      </div>
+      <div class="result panel">Score: <b id="score">0</b> · Tries: <b id="tries">0</b> · Stars: <b id="stars">☆☆☆</b></div>
+    </aside>
+  </div>
+
+<script>
+const $=(s,el=document)=>el.querySelector(s); const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+let SCORE=0, TRIES=0; function add(n){SCORE+=n; TRIES++; $('#score').textContent=SCORE; $('#tries').textContent=TRIES; $('#stars').textContent= SCORE>=36?'★★★':SCORE>=20?'★★☆':SCORE>=10?'★☆☆':'☆☆☆';}
+$$('.tab').forEach(t=>t.addEventListener('click',()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); const id=t.dataset.tab; if(id==='lead') renderLead(); if(id==='living') renderLiving(); if(id==='parts') renderParts(); if(id==='grow') renderGrow(); if(id==='quiz') renderQuiz(); }));
+
+function renderLead(){ const v=$('#view'); v.innerHTML=`
+  <div class="stage">
+    <div>
+      <p class="muted">Ask:</p>
+      <ul>
+        <li>Is a <b>plant</b> living or non‑living? Where can we find plants?</li>
+        <li>What do plants need to <b>grow</b>?</li>
+      </ul>
+      <div class="result">Play the tabs in order: <b>Plants are Living → Label Parts → Help Grow → Quiz</b></div>
+    </div>
+  </div>`; }
+
+// 1) Plants are Living (pick needs & living examples)
+function renderLiving(){ const v=$('#view'); v.innerHTML='';
+  const ui=document.createElement('div');
+  ui.innerHTML=`
+    <div class="row"><button class="primary" id="new">New Set</button> <button class="primary" id="check">Check</button></div>
+    <div class="panel" style="margin-top:8px">
+      <div class="badge">Pick 3 things plants <b>need</b></div>
+      <div id="needs" class="grid grid-2" style="margin-top:8px"></div>
+    </div>
+    <div class="panel" style="margin-top:8px">
+      <div class="badge">Tap the <b>living plants</b></div>
+      <div id="pics" class="grid grid-2" style="margin-top:8px"></div>
+    </div>
+    <div id="out" class="result"></div>`;
+  v.appendChild(ui);
+  const needBank=[
+    {t:'Water 💧', ok:true},{t:'Sunlight ☀️', ok:true},{t:'Air 🌬️', ok:true},
+    {t:'Stones 🪨', ok:false},{t:'Juice 🧃', ok:false},{t:'Music 🎵', ok:false},
+    {t:'Soil 🪴', ok:true},{t:'Chocolate 🍫', ok:false}
+  ];
+  const picBank=[
+    {t:'🌵 Cactus', ok:true},{t:'🌹 Rose', ok:true},{t:'🪑 Chair', ok:false},{t:'🚗 Car', ok:false},
+    {t:'🌴 Palm', ok:true},{t:'🪨 Rock', ok:false}
+  ];
+  function draw(){ const needs=$('#needs'); needs.innerHTML=''; needBank.sort(()=>Math.random()-0.5).slice(0,6).forEach((x,i)=>{ const d=document.createElement('div'); d.className='tile'; d.textContent=x.t; d.dataset.ok=x.ok; d.onclick=()=>d.classList.toggle('sel'); needs.appendChild(d); });
+    const pics=$('#pics'); pics.innerHTML=''; picBank.sort(()=>Math.random()-0.5).forEach(x=>{ const d=document.createElement('div'); d.className='tile'; d.innerHTML=`<div style="font-size:38px">${x.t.split(' ')[0]}</div><div class="tag">${x.t.split(' ')[1]||''}</div>`; d.dataset.ok=x.ok; d.onclick=()=>d.classList.toggle('sel'); pics.appendChild(d); });
+  }
+  draw();
+  $('#new').onclick=draw;
+  $('#check').onclick=()=>{ let ok=true; $$('#needs .tile').forEach(d=>{ if(d.classList.contains('sel')!== (d.dataset.ok==='true')) ok=false; }); $$('#pics .tile').forEach(d=>{ if(d.classList.contains('sel')!== (d.dataset.ok==='true')) ok=false; }); if(ok){ add(8); $('#out').innerHTML='<span class="ok">Great! Plants are living — they need water, sunlight, air, soil. 🌱</span>'; } else { add(0); $('#out').innerHTML='<span class="err">Try again. Tip: choose natural needs & real plants.</span>'; } };
+}
+
+// 2) Label Plant Parts (drag labels to SVG)
+function renderParts(){ const v=$('#view'); v.innerHTML=`
+  <div class="row"><button class="primary" id="reset">Reset</button> <button class="primary" id="check">Check</button></div>
+  <div class="stage"><svg id="plant" viewBox="0 0 300 260" aria-label="plant diagram">
+    <!-- soil -->
+    <rect x="0" y="210" width="300" height="50" fill="#1b283a"/>
+    <!-- stem -->
+    <rect x="146" y="110" width="8" height="100" fill="#3cb371"/>
+    <!-- leaves -->
+    <ellipse cx="130" cy="150" rx="28" ry="14" fill="#2e8b57"/>
+    <ellipse cx="170" cy="170" rx="28" ry="14" fill="#2e8b57"/>
+    <!-- flower -->
+    <circle cx="150" cy="90" r="18" fill="#ffb703"/>
+    <circle cx="150" cy="90" r="6" fill="#e85d04"/>
+    <!-- roots -->
+    <path d="M150 210 C140 220 130 230 125 240" stroke="#b08968" stroke-width="3" fill="none"/>
+    <path d="M150 210 C160 225 170 235 175 245" stroke="#b08968" stroke-width="3" fill="none"/>
+    <!-- drop zones -->
+    <g id="zones" font-size="12" fill="#9aa4b2">
+      <rect id="z_root"   x="30"  y="225" width="70" height="24" rx="8" fill="#0b1220" stroke="#2a3646"/>
+      <text x="65"  y="242" text-anchor="middle">root</text>
+      <rect id="z_stem"   x="220" y="135" width="70" height="24" rx="8" fill="#0b1220" stroke="#2a3646"/>
+      <text x="255" y="152" text-anchor="middle">stem</text>
+      <rect id="z_leaf"   x="20"  y="140" width="70" height="24" rx="8" fill="#0b1220" stroke="#2a3646"/>
+      <text x="55"  y="157" text-anchor="middle">leaf</text>
+      <rect id="z_flower" x="220" y="70"  width="70" height="24" rx="8" fill="#0b1220" stroke="#2a3646"/>
+      <text x="255" y="87"  text-anchor="middle">flower</text>
+    </g>
+  </svg></div>
+  <div class="panel" id="labels"></div>
+  <div class="result" id="partsOut"></div>`;
+  const items=['root','stem','leaf','flower']; const host=$('#labels');
+  function makeChip(name){ const d=document.createElement('div'); d.className='chip'; d.textContent=name; d.id='chip_'+name; d.draggable=true; d.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',d.id)); return d; }
+  function setupDZ(){ ['root','stem','leaf','flower'].forEach(n=>{ const dz=$('#z_'+n); dz.addEventListener('dragover',e=>{e.preventDefault(); dz.setAttribute('stroke','#22c55e');}); dz.addEventListener('dragleave',()=>dz.setAttribute('stroke','#2a3646')); dz.addEventListener('drop',e=>{e.preventDefault(); dz.setAttribute('stroke','#2a3646'); const id=e.dataTransfer.getData('text/plain'); const chip=document.getElementById(id); if(chip){ dz.dataset.fill=id.replace('chip_',''); dz.setAttribute('fill','#102235'); chip.style.opacity=0.2; chip.draggable=false; } });}); }
+  function reset(){ host.innerHTML=''; items.forEach(n=>host.appendChild(makeChip(n))); ['root','stem','leaf','flower'].forEach(n=>{ const dz=$('#z_'+n); dz.dataset.fill=''; dz.setAttribute('fill','#0b1220'); dz.setAttribute('stroke','#2a3646');}); $('#partsOut').textContent=''; }
+  reset(); setupDZ();
+  $('#reset').onclick=reset;
+  $('#check').onclick=()=>{ let ok=true; ['root','stem','leaf','flower'].forEach(n=>{ if($('#z_'+n).dataset.fill!==n) ok=false; }); if(ok){ add(8); $('#partsOut').innerHTML='<span class="ok">Excellent! Roots drink water, stem holds, leaves make food, flower gives beauty/fruit.</span>'; } else { add(0); $('#partsOut').innerHTML='<span class="err">Not yet. Drag each label to the correct place.</span>'; } };
+}
+
+// 3) Help the Plant Grow (choose good actions)
+function renderGrow(){ const v=$('#view'); v.innerHTML='';
+  const ui=document.createElement('div');
+  ui.innerHTML=`
+    <div class="row"><button class="primary" id="new">New Choices</button> <button class="primary" id="check">Check</button></div>
+    <div class="stage" id="growStage"></div>
+    <div id="growOut" class="result"></div>`; v.appendChild(ui);
+  const acts=[
+    {t:'Water the plant 💧', ok:true},
+    {t:'Give sunlight ☀️', ok:true},
+    {t:'Place in clean air 🌬️', ok:true},
+    {t:'Pluck leaves ❌', ok:false},
+    {t:'Step on the roots ❌', ok:false},
+    {t:'Throw rubbish near it ❌', ok:false},
+    {t:'Talk kindly to plants 😊', ok:true},
+    {t:'Share shade with friends 🌳', ok:true}
+  ];
+  function draw(){ const host=$('#growStage'); host.innerHTML='';
+    const left=document.createElement('div'); left.style.flex='1'; left.innerHTML=`<svg viewBox="0 0 300 260">
+      <rect x="0" y="210" width="300" height="50" fill="#1b283a"/>
+      <rect x="146" y="150" width="8" height="60" fill="#3cb371"/>
+      <ellipse cx="160" cy="170" rx="20" ry="10" fill="#2e8b57"/>
+      <circle id="bud" cx="150" cy="140" r="12" fill="#5fa8d3"/>
+    </svg>`;
+    const right=document.createElement('div'); right.style.flex='1'; right.innerHTML='<div class="badge">Tap the <b>good</b> actions</div>';
+    const list=document.createElement('div'); list.className='grid'; list.style.marginTop='8px';
+    acts.sort(()=>Math.random()-0.5).slice(0,6).forEach(a=>{ const d=document.createElement('div'); d.className='tile'; d.textContent=a.t; d.dataset.ok=a.ok; d.onclick=()=>d.classList.toggle('sel'); list.appendChild(d); });
+    right.appendChild(list); host.append(left,right);
+  }
+  draw();
+  $('#new').onclick=draw;
+  $('#check').onclick=()=>{ let ok=true; $$('#growStage .tile').forEach(d=>{ if(d.classList.contains('sel')!== (d.dataset.ok==='true')) ok=false; }); const bud=$('#bud'); if(ok){ add(8); $('#growOut').innerHTML='<span class="ok">Beautiful! Your plant grew with kindness and care. 🌸</span>'; bud.setAttribute('fill','#ffb703'); } else { add(0); $('#growOut').innerHTML='<span class="err">Hmm… pick actions that <b>help</b> the plant, not harm it.</span>'; bud.setAttribute('fill','#5fa8d3'); }
+  };
+}
+
+// 4) Garden Quiz
+function renderQuiz(){ const v=$('#view'); v.innerHTML='';
+  const ui=document.createElement('div');
+  ui.innerHTML=`
+    <div class="row"><button class="primary" id="newQ">New 8‑Q Set</button> <button class="primary" id="checkQ">Check</button> <button class="warn" id="hint">Hints</button></div>
+    <div id="qs" style="margin-top:8px"></div>
+    <div id="out" class="result"></div>`; v.appendChild(ui);
+  const bank=[
+    {t:'A plant is a living thing.', a:'T'},
+    {t:'Plants can grow without water.', a:'F'},
+    {t:'Leaves help a plant make food.', a:'T'},
+    {t:'Roots hold the plant in soil.', a:'T'},
+    {t:'A chair is a plant.', a:'F'},
+    {t:'Sunlight helps plants grow.', a:'T'},
+    {t:'We should not pluck leaves for fun.', a:'T'},
+    {t:'Flowers are never part of a plant.', a:'F'}
+  ];
+  let set=[]; function gen(){ set=[...bank].sort(()=>Math.random()-0.5).slice(0,8); draw(); $('#out').textContent=''; }
+  function draw(){ const host=$('#qs'); host.innerHTML=''; set.forEach((q,i)=>{ host.innerHTML+=`<div class="panel" style="margin-bottom:8px"><div><span class="badge">Q${i+1}</span> ${q.t}</div>
+    <div class="row"><label><input type="radio" name="q${i}" value="T"> True</label> <label><input type="radio" name="q${i}" value="F"> False</label></div></div>`; }); }
+  gen();
+  $('#newQ').onclick=gen; $('#hint').onclick=()=>$('#out').innerHTML='Hint: Plants need water, sunlight & air; root, stem, leaf, flower each has a role; be kind to plants.';
+  $('#checkQ').onclick=()=>{ let ok=0; set.forEach((q,i)=>{ const pick=($$("input[name='q"+i+"']:checked")[0]||{}).value; if(pick===q.a) ok++;}); if(ok===set.length){ add(10); $('#out').innerHTML='<span class="ok">MashaAllah! Full marks 🌟</span>'; } else { add(0); $('#out').innerHTML='<span class="err">Correct:</span> '+ok+' / '+set.length+' — Review parts & needs of plants.'; }
+  };
+}
+
+// boot
+renderLead();
+</script>
+</body>
+</html>
